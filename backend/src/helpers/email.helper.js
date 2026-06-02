@@ -36,3 +36,27 @@ export const sendVerificationEmail = async (email) => {
         console.error("Error al enviar el correo con Nodemailer:", error);
     }
 };
+
+export const sendResetPasswordEmail = async (email, resetUrl) => {
+    try {
+        await transporter.sendMail({
+            from: `"Mi App Backend" <${ENVIRONMENT.GMAIL_USERNAME}>`,
+            to: email,
+            subject: 'Restablecer tu contraseña',
+            html: `
+                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px;">
+                    <h2 style="color: #333;">Restablecimiento de contraseña</h2>
+                    <p>Has solicitado cambiar tu contraseña. Haz clic en el siguiente botón para crear una nueva:</p>
+                    <div style="text-align: center; margin: 30px 0;">
+                        <a href="${resetUrl}" style="padding: 12px 25px; background-color: #4A154B; color: white; text-decoration: none; border-radius: 5px; font-weight: bold;">Restablecer mi contraseña</a>
+                    </div>
+                    <p style="color: #666; font-size: 14px;">Si no fuiste tú quien solicitó este cambio, puedes ignorar este correo de forma segura.</p>
+                </div>
+            `
+        });
+        console.log("¡Correo de restablecimiento enviado exitosamente a:", email);
+    } catch (error) {
+        console.error("Error al enviar el correo de restablecimiento:", error);
+        throw new Error("Hubo un problema al enviar el correo.");
+    }
+};

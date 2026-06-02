@@ -8,7 +8,8 @@ const ENVIRONMENT = {
     MODE: process.env.MODE,
     GMAIL_USERNAME: process.env.GMAIL_USERNAME,
     EMAIL_PASSWORD: process.env.EMAIL_PASSWORD,
-    JWT_SECRET: process.env.JWT_SECRET
+    JWT_SECRET: process.env.JWT_SECRET,
+    FRONTEND_URL: process.env.FRONTEND_URL
 }
 
 export default ENVIRONMENT;

@@ -1,7 +1,7 @@
 import userRepository from '../repositories/user.repository.js';
 import ServerError from '../helpers/serverError.helper.js';
 import bcrypt from 'bcrypt';
-import { sendVerificationEmail } from '../helpers/email.helper.js';
+import { sendVerificationEmail, sendResetPasswordEmail } from '../helpers/email.helper.js';
 import jwt from 'jsonwebtoken';
 import ENVIRONMENT from '../config/environment.config.js';
 
@@ -172,7 +172,7 @@ class AuthController {
         }
     }
 
-    async resetPasswordRequest(request, response, next) {
+    async resetPasswordRequest(request, response) {
         try {
             const { email } = request.body;
             if (!email) throw new ServerError("El email es requerido", 400);
@@ -188,48 +188,36 @@ class AuthController {
 
             const resetUrl = `${ENVIRONMENT.FRONTEND_URL}/reset-password?reset_password_token=${token}`;
 
-            await sendEmail({
-                to: user.email,
-                subject: "Restablecer contraseña",
-                html: `
-                    <h2>Restablecimiento de contraseña</h2>
-                    <p>Haz solicitado cambiar tu contraseña. Haz clic en el siguiente enlace para continuar:</p>
-                    <a href="${resetUrl}">Restablecer mi contraseña</a>
-                    <p>Si no fuiste tú, ignora este correo.</p>
-                `
-            });
+            await sendResetPasswordEmail(user.email, resetUrl);
 
             return response.status(200).json({
                 ok: true,
                 message: "Correo de restablecimiento enviado con éxito"
             });
         } catch (error) {
-            next(error);
+            if (error instanceof ServerError) {
+                return response.status(error.status).json({ ok: false, message: error.message });
+            } else {
+                return response.status(500).json({ ok: false, message: "Error al procesar la solicitud" });
+            }
         }
-    },
+    }
 
-    async resetPassword(request, response, next) {
+    async resetPassword(request, response) {
         try {
             const authHeader = request.headers.authorization;
-            if (!authHeader) {
-                throw new ServerError("No hay token de autorización", 401);
-            }
+            if (!authHeader) throw new ServerError("No hay token de autorización", 401);
 
             const token = authHeader.split(" ")[1];
-            if (!token) {
-                throw new ServerError("Token mal formado", 401);
-            }
+            if (!token) throw new ServerError("Token mal formado", 401);
 
             const decoded = jwt.verify(token, ENVIRONMENT.JWT_SECRET);
 
             const { new_password } = request.body;
-            if (!new_password) {
-                throw new ServerError("La nueva contraseña es requerida", 400);
-            }
+            if (!new_password) throw new ServerError("La nueva contraseña es requerida", 400);
+
             const user = await userRepository.getById(decoded.id);
-            if (!user) {
-                throw new ServerError("Usuario no encontrado", 404);
-            }
+            if (!user) throw new ServerError("Usuario no encontrado", 404);
 
             const hashedPassword = await bcrypt.hash(new_password, 10);
 
@@ -247,26 +235,12 @@ class AuthController {
             });
 
         } catch (error) {
-            if (
-                error instanceof jwt.JsonWebTokenError ||
-                error instanceof jwt.NotBeforeError ||
-                error instanceof jwt.TokenExpiredError
-            ) {
-                return response.status(401).json({
-                    message: "El enlace para restablecer la contraseña es inválido o ha expirado",
-                    ok: false,
-                    status: 401
-                });
+            if (error instanceof jwt.JsonWebTokenError || error instanceof jwt.NotBeforeError || error instanceof jwt.TokenExpiredError) {
+                return response.status(401).json({ message: "El enlace para restablecer la contraseña es inválido o ha expirado", ok: false, status: 401 });
             } else if (error instanceof ServerError) {
-                return response.status(error.status).json({
-                    ok: false,
-                    message: error.message
-                });
+                return response.status(error.status).json({ ok: false, message: error.message });
             } else {
-                return response.status(500).json({
-                    ok: false,
-                    message: error.message || "Error interno del servidor"
-                });
+                return response.status(500).json({ ok: false, message: error.message || "Error interno del servidor" });
             }
         }
     }
