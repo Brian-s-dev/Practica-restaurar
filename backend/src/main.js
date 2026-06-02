@@ -51,13 +51,3 @@ connectMongoDB()
 
 app.use('/api/auth', authRouter);
 app.use('/api/workspace', workspaceRouter);
-
-/* 
-
-/api/auth => trabaja todo lo relacionado a autentificacion
-/api/workspace => trabaja todo lo relacionado a los espacios de trabajo
-    /:workspace_id/members => trabaja todo lo relacionado a los miembros de un espacio de trabajo
-    /:workspace_id/channels => trabaja todo lo relacionado a los canales de un espacio de trabajo
-        /:channel_id/messages => trabaja todo lo relacionado a los mensajes de un canal de un espacio de trabajo
-    /:workspace_id/contacts => trabaja todo lo relacionado a los contactos de un espacio de trabajo
-*/
