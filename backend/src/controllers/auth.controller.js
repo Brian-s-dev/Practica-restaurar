@@ -7,9 +7,9 @@ import ENVIRONMENT from '../config/environment.config.js';
 
 
 class AuthController {
-    async register(req, res) {
+    async register(request, response) {
         try {
-            const { nombre, email, password } = req.body;
+            const { nombre, email, password } = request.body;
 
             if (!nombre || nombre.length <= 2) {
                 throw new ServerError("El nombre debe tener más de 2 caracteres", 400);
@@ -30,7 +30,7 @@ class AuthController {
 
             sendVerificationEmail(email);
 
-            return res.status(201).json({
+            return response.status(201).json({
                 ok: true,
                 message: "Usuario registrado. Por favor, verifica tu email.",
                 status: 201,
@@ -45,12 +45,12 @@ class AuthController {
 
         } catch (error) {
             if (error instanceof ServerError) {
-                return res.status(error.status).json({
+                return response.status(error.status).json({
                     ok: false,
                     message: error.message
                 });
             } else {
-                return res.status(500).json({
+                return response.status(500).json({
                     ok: false,
                     message: error.message
                 });
@@ -58,9 +58,9 @@ class AuthController {
         }
     }
 
-    async verifyEmail(req, res) {
+    async verifyEmail(request, response) {
         try {
-            const { verification_token } = req.query;
+            const { verification_token } = request.query;
 
             if (!verification_token) {
                 throw new ServerError("Falta token de verificación", 400);
@@ -79,7 +79,7 @@ class AuthController {
 
             await userRepository.updateById(user._id, { email_verificado: true });
 
-            return res.status(200).json({
+            return response.status(200).json({
                 ok: true,
                 message: "Email verificado correctamente. ¡Ya puedes usar tu cuenta!"
             });
@@ -92,7 +92,7 @@ class AuthController {
                 ||
                 error instanceof jwt.TokenExpiredError
             ) {
-                return res.status(401).json(
+                return response.status(401).json(
                     {
                         message: "Token invalido",
                         ok: false,
@@ -101,12 +101,12 @@ class AuthController {
                 )
             }
             else if (error instanceof ServerError) {
-                return res.status(error.status).json({
+                return response.status(error.status).json({
                     ok: false,
                     message: error.message
                 });
             } else {
-                return res.status(500).json({
+                return response.status(500).json({
                     ok: false,
                     message: error.message
                 });
@@ -114,9 +114,9 @@ class AuthController {
         }
     }
 
-    async login(req, res) {
+    async login(request, response) {
         try {
-            const { email, password } = req.body;
+            const { email, password } = request.body;
 
             if (!email || !password) {
                 throw new ServerError("El email y la contraseña son obligatorios", 400);
@@ -148,7 +148,7 @@ class AuthController {
                 ENVIRONMENT.JWT_SECRET
             );
 
-            return res.status(200).json({
+            return response.status(200).json({
                 ok: true,
                 message: "Inicio de sesión exitoso",
                 data: {
@@ -159,18 +159,119 @@ class AuthController {
 
         } catch (error) {
             if (error instanceof ServerError) {
-                return res.status(error.status).json({
+                return response.status(error.status).json({
                     ok: false,
                     message: error.message
                 });
             } else {
-                return res.status(500).json({
+                return response.status(500).json({
                     ok: false,
                     message: "Error interno del servidor"
                 });
             }
         }
     }
+
+    resetPasswordRequest: async (request, response, next) => {
+    try {
+        const { email } = request.body;
+        if (!email) throw new ServerError("El email es requerido", 400);
+
+        const user = await userRepository.getByEmail(email);
+        if (!user) throw new ServerError("Usuario no encontrado o inactivo", 404);
+
+        const token = jwt.sign(
+            { id: user._id },
+            environment.JWT_SECRET,
+            { expiresIn: "15m" }
+        );
+
+        const resetUrl = `${environment.FRONTEND_URL}/reset-password?reset_password_token=${token}`;
+
+        await sendEmail({
+            to: user.email,
+            subject: "Restablecer contraseña",
+            html: `
+                    <h2>Restablecimiento de contraseña</h2>
+                    <p>Haz solicitado cambiar tu contraseña. Haz clic en el siguiente enlace para continuar:</p>
+                    <a href="${resetUrl}">Restablecer mi contraseña</a>
+                    <p>Si no fuiste tú, ignora este correo.</p>
+                `
+        });
+
+        return response.status(200).json({
+            ok: true,
+            message: "Correo de restablecimiento enviado con éxito"
+        });
+    } catch (error) {
+        next(error);
+    }
+},
+
+resetPassword: async (request, response, next) => {
+    try {
+        const authHeader = request.headers.authorization;
+        if (!authHeader) {
+            throw new ServerError("No hay token de autorización", 401);
+        }
+
+        const token = authHeader.split(" ")[1];
+        if (!token) {
+            throw new ServerError("Token mal formado", 401);
+        }
+
+        const decoded = jwt.verify(token, ENVIRONMENT.JWT_SECRET);
+
+        const { new_password } = request.body;
+        if (!new_password) {
+            throw new ServerError("La nueva contraseña es requerida", 400);
+        }
+        const user = await userRepository.getById(decoded.id);
+        if (!user) {
+            throw new ServerError("Usuario no encontrado", 404);
+        }
+
+        const hashedPassword = await bcrypt.hash(new_password, 10);
+
+        const updateData = { password: hashedPassword };
+
+        if (user.email_verificado === false) {
+            updateData.email_verificado = true;
+        }
+
+        await userRepository.updateById(user._id, updateData);
+
+        return res.status(200).json({
+            ok: true,
+            message: "Contraseña actualizada exitosamente. Tu cuenta está activa y verificada."
+        });
+
+    } catch (error) {
+        if (
+            error instanceof jwt.JsonWebTokenError ||
+            error instanceof jwt.NotBeforeError ||
+            error instanceof jwt.TokenExpiredError
+        ) {
+            return res.status(401).json({
+                message: "El enlace para restablecer la contraseña es inválido o ha expirado",
+                ok: false,
+                status: 401
+            });
+        } else if (error instanceof ServerError) {
+            return res.status(error.status).json({
+                ok: false,
+                message: error.message
+            });
+        } else {
+            return res.status(500).json({
+                ok: false,
+                message: error.message || "Error interno del servidor"
+            });
+        }
+    }
+}
+};
+}
 }
 
 const authController = new AuthController();

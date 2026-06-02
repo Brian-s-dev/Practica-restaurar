@@ -34,7 +34,7 @@ class UserRepository {
     }
 
     async updateById(user_id, update_data) {
-        await User.findByIdAndUpdate(user_id, update_data)
+        await User.findByIdAndUpdate(user_id, update_data, { new: true })
     }
 }
 
