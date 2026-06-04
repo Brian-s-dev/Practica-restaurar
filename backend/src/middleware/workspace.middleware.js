@@ -9,6 +9,9 @@ function workspaceMiddleware(valid_roles = []) {
             const { workspace_id } = request.params;
             const user_id = request.user.id;
 
+            console.log("1. Intentando acceder al Workspace ID:", workspace_id);
+            console.log("2. El ID de mi usuario actual es:", user_id);
+
             const workspace = await workspaceRepository.getById(workspace_id);
 
             if (!workspace || !workspace.estado) {
@@ -16,6 +19,9 @@ function workspaceMiddleware(valid_roles = []) {
             }
 
             const member = await workspaceMemberRepository.getMemberByWorkspaceAndUserId(workspace_id, user_id);
+
+            console.log("3. Membresía encontrada en la Base de Datos:", member);
+            console.log("4. Roles que permite esta ruta:", valid_roles);
 
             if (!member) {
                 throw new ServerError("No eres miembro de este espacio de trabajo", 403);

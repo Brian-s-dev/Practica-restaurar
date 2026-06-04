@@ -31,7 +31,7 @@ workspaceRouter.delete(
 workspaceRouter.post(
     '/:workspace_id/members',
     authMiddleware,
-    workspaceMiddleware(['owner', 'admin']),
+    workspaceMiddleware([MEMBER_WORKSPACE_ROLES.OWNER, MEMBER_WORKSPACE_ROLES.ADMIN]),
     workspaceController.inviteUser
 );
 
