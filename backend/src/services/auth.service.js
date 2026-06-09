@@ -19,7 +19,7 @@ class AuthService {
             nombre,
             email,
             password: hashedPassword,
-            verified: false
+            email_verificado: false
         });
 
         const verificationToken = jwt.sign(
@@ -42,7 +42,7 @@ class AuthService {
         const isMatch = await bcrypt.compare(password, user.password);
         if (!isMatch) throw new ServerError("Credenciales inválidas", 401);
 
-        if (!user.verified) throw new ServerError("Tu correo no ha sido verificado", 403);
+        if (!user.email_verificado) throw new ServerError("Tu correo no ha sido verificado", 403);
 
         const access_token = jwt.sign(
             {
@@ -65,9 +65,9 @@ class AuthService {
         const user = await userRepository.getByEmail(decoded.email);
         if (!user) throw new ServerError("Usuario no encontrado", 404);
 
-        if (user.verified) throw new ServerError("El correo ya fue verificado anteriormente", 400);
+        if (user.email_verificado) throw new ServerError("El correo ya fue verificado anteriormente", 400);
 
-        await userRepository.updateById(user._id, { verified: true });
+        await userRepository.updateById(user._id, { email_verificado: true });
 
         return user;
     }
@@ -99,7 +99,7 @@ class AuthService {
 
         await userRepository.updateById(user._id, {
             password: hashedPassword,
-            verified: true
+            email_verificado: true
         });
 
         return user;
