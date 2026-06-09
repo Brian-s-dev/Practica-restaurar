@@ -1,12 +1,14 @@
+import MEMBER_INVITATION_STATUS from "../constants/memberInvitationStatus.constant.js"
 import WorkspaceMember from "../models/workspaceMembers.model.js"
 
 class WorkspaceMemberRepository {
 
     //Busca una membresia en particular
-    async getByUserAndWorkspaceId(user_id, workspace_id) {
+    async getByUserAndWorkspaceId(user_id, workspace_id, estatus_invitacion = MEMBER_INVITATION_STATUS.ACCEPTED) {
         const membership = await WorkspaceMember.findOne({
             fk_user_id: user_id,
-            fk_workspace_id: workspace_id
+            fk_workspace_id: workspace_id,
+            estatus_invitacion
         })
         return membership
     }
@@ -39,7 +41,10 @@ class WorkspaceMemberRepository {
     async getByWorkspaceId(workspace_id) {
         //Lista de membresias por x espacio de trabajo
         const result = await WorkspaceMember
-            .find({ fk_workspace_id: workspace_id })
+            .find({
+                fk_workspace_id: workspace_id,
+                estatus_invitacion: MEMBER_INVITATION_STATUS.ACCEPTED
+            })
             //Populate sirve para poder expandir una cierta propiedad
             //Cuando expandimos basicamente estamos trayendo los datos referenciados a esa propiedad
             //Solo podemos expandir las propiedades que en el modelo fueron marcadas como referencias
@@ -59,7 +64,7 @@ class WorkspaceMemberRepository {
 
     async getByUserId(user_id) {
         const memberships = await WorkspaceMember
-            .find({ fk_user_id: user_id })
+            .find({ fk_user_id: user_id, estatus_invitacion: MEMBER_INVITATION_STATUS.ACCEPTED })
             //Por cada membresia quiero expandir la propiedad 'fk_workspace_id' trayendo asi el nombre, descripcion y el estado asociados al espacio de trabajo
             .populate(
                 {

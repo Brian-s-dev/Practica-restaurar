@@ -5,7 +5,7 @@ import express from "express";
 /* SOLO EN LOCAL Y SI TENER PROBLEMAS DE DNS PARA CONECTARTE A MONGODB */
 import dns from 'dns';
 import authRouter from "./routes/auth.router.js";
-import authMiddlewares from "./middlewares/auth.middleware.js";
+import authMiddleware from "./middlewares/auth.middleware.js";
 import workspaceRouter from "./routes/workspace.router.js";
 
 
@@ -42,6 +42,7 @@ RECOMENDACION:
     )
 */
 import cors from 'cors'
+import errorHandlerMiddleware from "./middlewares/error.middleware.js";
 
 const app = express();
 const PORT = ENVIRONMENT.PORT;
@@ -117,8 +118,9 @@ TAREA 4/6:
 
 
 
-
-
+//Siempre debe estar al final
+//Esto es debido a que este middleware se ejecutara entre el controller y la response del servidor
+app.use(errorHandlerMiddleware)
 
 app.listen(PORT, () => {
     console.log(`Servidor corriendo en http://localhost:${PORT}`);

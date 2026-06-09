@@ -1,5 +1,6 @@
 import jwt from 'jsonwebtoken'
-import ServerError from '../helpers/serverError.helper';
+import ServerError from '../helpers/serverError.helper.js';
+
 
 function errorHandlerMiddleware(error, req, res, next) {
     if (
@@ -36,4 +37,4 @@ function errorHandlerMiddleware(error, req, res, next) {
     }
 }
 
-export default errorHandlerMiddleware;
+export default errorHandlerMiddleware

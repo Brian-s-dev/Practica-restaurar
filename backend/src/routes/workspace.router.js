@@ -8,6 +8,12 @@ import memberWorkspaceController from '../controllers/memberWorkspace.controller
 
 const workspaceRouter = express.Router();
 
+//Lo pongo arriba ya que no quiero que este alcanzado por el auth middleware
+workspaceRouter.get(
+    '/:workspace_id/members/:decision',
+    memberWorkspaceController.processInvitation
+);
+
 //Configuramos el authMiddleware a nivel de ruta
 workspaceRouter.use(authMiddleware);
 
@@ -35,9 +41,6 @@ workspaceRouter.post(
 );
 
 
-/* workspaceRouter.get(
-    '/:workspace_id/members/:decision',
-    workspaceController.processInvitation
-); */
+
 
 export default workspaceRouter;
