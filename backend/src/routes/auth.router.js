@@ -20,13 +20,14 @@ authRouter.post(
 )
 
 authRouter.post(
-    '/reset-password-request',
-    authController.resetPasswordRequest
+    '/forgot-password',
+    authController.forgotPassword
 );
 
 authRouter.post(
     '/reset-password',
-    authController.resetPasswordConfirm
-)
+    authController.resetPassword
+);
+
 
 export default authRouter
