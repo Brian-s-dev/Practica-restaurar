@@ -17,12 +17,14 @@ class WorkspaceRepository {
     }
     async softDeleteById(workspace_id) {
         await this.updateById(workspace_id, { estado: false });
+        //await Workspace.findByIdAndUpdate(workspace_id, {activo: false});
     }
     async deleteById(workspace_id) {
-        return await Workspace.findByIdAndDelete(workspace_id);
+        return await Workspace.findByIdAndDelete(workspace_id, { estado: false });
     }
+
     async updateById(workspace_id, update_data) {
-        return await Workspace.findByIdAndUpdate(workspace_id, update_data, { new: true });
+        return await Workspace.findByIdAndUpdate(workspace_id, update_data);
     }
     async create(nombre, descripcion) {
         return await Workspace.create({

@@ -2,12 +2,24 @@ import WorkspaceMember from "../models/workspaceMembers.model.js"
 
 class WorkspaceMemberRepository {
 
-    async create({ fk_user_id, fk_workspace_id, rol }) {
+    //Busca una membresia en particular
+    async getByUserAndWorkspaceId(user_id, workspace_id) {
+        const membership = await WorkspaceMember.findOne({
+            fk_user_id: user_id,
+            fk_workspace_id: workspace_id
+        })
+        return membership
+    }
+
+    /* Desarrollar los metodos */
+    async create(user_id, workspace_id, rol, estatus_invitacion, fecha_expiracion_invitacion) {
         return await WorkspaceMember.create({
-            fk_workspace_id: fk_workspace_id,
-            fk_user_id: fk_user_id,
-            rol: rol
-        });
+            fk_workspace_id: workspace_id,
+            fk_user_id: user_id,
+            rol: rol,
+            estatus_invitacion,
+            fecha_expiracion_invitacion
+        })
     }
 
     async getById(member_id) {
@@ -22,15 +34,53 @@ class WorkspaceMemberRepository {
         return await WorkspaceMember.findByIdAndDelete(member_id)
     }
 
+    /* HASTA AQUI */
+
     async getByWorkspaceId(workspace_id) {
+        //Lista de membresias por x espacio de trabajo
         const result = await WorkspaceMember
             .find({ fk_workspace_id: workspace_id })
-            .populate('fk_user_id', 'nombre email')
+            //Populate sirve para poder expandir una cierta propiedad
+            //Cuando expandimos basicamente estamos trayendo los datos referenciados a esa propiedad
+            //Solo podemos expandir las propiedades que en el modelo fueron marcadas como referencias
+            .populate(
+                'fk_user_id', 'nombre email'
+            )
 
         const members_mapped = result.map(
             (member) => new MemberWorkspaceWithUserInfo(member)
         )
         return members_mapped
+    }
+
+    /* async getByUserId(user_id) {
+        //Lista de membresias por x usuario, saber a que espacios de trabajo pertenece un usuario
+    } */
+
+    async getByUserId(user_id) {
+        const memberships = await WorkspaceMember
+            .find({ fk_user_id: user_id })
+            //Por cada membresia quiero expandir la propiedad 'fk_workspace_id' trayendo asi el nombre, descripcion y el estado asociados al espacio de trabajo
+            .populate(
+                {
+                    path: 'fk_workspace_id', //Propiedad a expandir
+                    select: 'nombre descripcion estado', //Propiedades que seleccionamos del dato expandido
+                    match: { estado: true } //Condicion
+                }
+            );
+
+        return memberships
+            .filter(
+                membership => membership.fk_workspace_id
+            )
+            .map(membership => ({
+                member_id: membership._id,
+                member_rol: membership.rol,
+                member_fecha_union: membership.fecha_creacion,
+                workspace_id: membership.fk_workspace_id._id,
+                workspace_nombre: membership.fk_workspace_id.nombre,
+                workspace_descripcion: membership.fk_workspace_id.descripcion
+            }));
     }
 
     async getMemberByWorkspaceAndUserId(workspace_id, user_id) {
@@ -41,32 +91,23 @@ class WorkspaceMemberRepository {
     }
 
 
-    async getByUserId(user_id) {
-        const memberships = await WorkspaceMember
-            .find({ fk_user_id: user_id })
-            .populate('fk_workspace_id', 'nombre descripcion estado');
-
-        return memberships
-            .filter(membership => membership.fk_workspace_id && membership.fk_workspace_id.estado) 
-            .map(membership => ({
-                rol: membership.rol,
-                fecha_union: membership.fecha_creacion,
-                workspace: membership.fk_workspace_id
-            }));
-    }
 }
 
 const workspaceMemberRepository = new WorkspaceMemberRepository()
+
 export default workspaceMemberRepository
 
+
 class MemberWorkspaceWithUserInfo {
-    constructor(raw_member) {
-        this.member_id = raw_member._id;
-        this.member_fk_workspace_id = raw_member.fk_workspace_id;
-        this.member_rol = raw_member.rol;
-        this.member_fecha_creacion = raw_member.fecha_creacion;
-        this.user_id = raw_member.fk_user_id._id;
-        this.user_nombre = raw_member.fk_user_id.nombre;
-        this.user_email = raw_member.fk_user_id.email;
+    constructor(
+        raw_member
+    ) {
+        this.user_id = raw_member._id
+        this.member_fk_workspace_id = raw_member.fk_workspace_id,
+            this.member_rol = raw_member.rol,
+            this.member_fecha_creacion = raw_member.fecha_creacion,
+            this.user_id = raw_member.fk_user_id._id,
+            this.user_nombre = raw_member.fk_user_id.nombre,
+            this.user_email = raw_member.fk_user_id.email
     }
 }

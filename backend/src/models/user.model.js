@@ -1,4 +1,7 @@
-import mongoose from "mongoose";
+import mongoose from 'mongoose'
+/* 
+Definir el esquema que tendra un usuario dentro de nuestra aplicacion.
+*/
 
 const userSchema = new mongoose.Schema(
     {
@@ -9,6 +12,7 @@ const userSchema = new mongoose.Schema(
         email: {
             type: String,
             required: true,
+            unique: true
         },
         password: {
             type: String,
@@ -16,13 +20,13 @@ const userSchema = new mongoose.Schema(
         },
         email_verificado: {
             type: Boolean,
-            required: true,
-            default: false
+            default: false,
+            required: true
         },
         fecha_creacion: {
             type: Date,
             required: true,
-            default: Date.now()
+            default: Date.now
         },
         activo: {
             type: Boolean,
@@ -31,9 +35,7 @@ const userSchema = new mongoose.Schema(
         }
     }
 )
+export const USER_COLLECTION_NAME = 'User'
+const User = mongoose.model(USER_COLLECTION_NAME, userSchema)
 
-export const USER_COLLECTION_NAME = "User"
-const User = mongoose.model(USER_COLLECTION_NAME, userSchema);
-
-
-export default User;
+export default User
