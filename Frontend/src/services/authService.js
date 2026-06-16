@@ -14,11 +14,10 @@ export async function login(email, password) {
 
 export async function forgotPassword(email) {
     try {
-        // CAMBIO 1: La URL ahora coincide exactamente con tu auth.router.js del backend
         const response_http = await fetch('http://localhost:8080/api/auth/forgot-password', {
             method: 'POST',
             headers: { 'Content-Type': "application/json" },
-            body: JSON.stringify({ email }) // Enviamos el email en el body, como espera el controlador
+            body: JSON.stringify({ email })
         });
         return await response_http.json();
     } catch (error) {
@@ -28,13 +27,11 @@ export async function forgotPassword(email) {
 
 export async function resetPassword(token, new_password) {
     try {
-        // CAMBIO 2: Pasamos el token por la URL (?reset_token=...) porque así lo configuramos en auth.controller.js
-        const response_http = await fetch(`http://localhost:8080/api/auth/reset-password?reset_token=${token}`, {
+        const response_http = await fetch(`http://localhost:8080/api/auth/reset-password?reset_password_token=${token}`, {
             method: 'POST',
             headers: {
                 'Content-Type': "application/json"
             },
-            // Ya no hace falta el Authorization header aquí, solo enviamos la nueva contraseña en el body
             body: JSON.stringify({ new_password })
         });
         return await response_http.json();

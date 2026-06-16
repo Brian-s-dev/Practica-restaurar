@@ -82,7 +82,7 @@ class AuthService {
             { expiresIn: '1h' }
         );
 
-        const resetUrl = `${ENVIRONMENT.URL_FRONTEND}/reset-password?reset_token=${resetToken}`;
+        const resetUrl = `${ENVIRONMENT.URL_FRONTEND}/reset-password?reset_password_token=${resetToken}`;
 
         await mailService.sendResetPasswordEmail(email, resetUrl);
     }

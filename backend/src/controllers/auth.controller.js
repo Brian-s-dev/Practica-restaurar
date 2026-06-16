@@ -62,12 +62,12 @@ class AuthController {
     }
 
     async resetPassword(request, response) {
-        const { reset_token } = request.query;
+        const { reset_password_token } = request.query;
         const { new_password } = request.body;
 
         if (!new_password) throw new ServerError("La nueva contraseña es obligatoria", 400);
 
-        await authService.resetPassword(reset_token, new_password);
+        await authService.resetPassword(reset_password_token, new_password);
 
         return response.status(200).json({
             ok: true,

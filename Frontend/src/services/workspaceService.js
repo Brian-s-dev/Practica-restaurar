@@ -2,7 +2,7 @@ const API_URL = 'http://localhost:8080/api/workspace';
 
 export async function getWorkspaces() {
     try {
-        const token = sessionStorage.getItem('access_token');
+        const token = localStorage.getItem('access_token');
         const response_http = await fetch(API_URL, {
             method: 'GET',
             headers: {
@@ -19,7 +19,7 @@ export async function getWorkspaces() {
 
 export async function createWorkspace(nombre, descripcion) {
     try {
-        const token = sessionStorage.getItem('access_token');
+        const token = localStorage.getItem('access_token');
         const response_http = await fetch(API_URL, {
             method: 'POST',
             headers: {
@@ -38,7 +38,7 @@ export async function createWorkspace(nombre, descripcion) {
 
 export async function inviteUserToWorkspace(workspace_id, invited_email, role) {
     try {
-        const token = sessionStorage.getItem('access_token');
+        const token = localStorage.getItem('access_token');
         const response_http = await fetch(`${API_URL}/${workspace_id}/members`, {
             method: 'POST',
             headers: {
